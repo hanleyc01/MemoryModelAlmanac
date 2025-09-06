@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "MemoryModelAlmanac"
+  site-url: "https://hanleyc01.github.io/MemoryModelAlmanac"
+  description: "Almanac of contemporary memory models in Cognitive Science."
+  repo-branch: main
+  repo-url: "https://github.com/hanleyc01/MemoryModelAlmanac"
