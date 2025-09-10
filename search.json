@@ -1,0 +1,92 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "MemoryModelAlmanac",
+    "section": "",
+    "text": "In this website, we will be compiling all extant memory models in cognitive science. This project aims to be useful for someone new to the field of cognitive modeling of human memory, however the main purpose is for me to gain an encyclopedic knowledge of the different memory models which are historically relevant.",
+    "crumbs": [
+      "MemoryModelAlmanac"
+    ]
+  },
+  {
+    "objectID": "index.html#developer-guide",
+    "href": "index.html#developer-guide",
+    "title": "MemoryModelAlmanac",
+    "section": "Developer Guide",
+    "text": "Developer Guide\n\nInstall MemoryModelAlmanac in Development mode\n# make sure MemoryModelAlmanac package is installed in development mode\n# further, make sure you have `uv` installed:\n$ uv sync\n\n# make changes under nbs/ directory\n# ...\n\n# compile to have changes apply to MemoryModelAlmanac\n$ uv run nbdev_prepare",
+    "crumbs": [
+      "MemoryModelAlmanac"
+    ]
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "MemoryModelAlmanac",
+    "section": "Usage",
+    "text": "Usage\n\nInstallation\nInstall latest from the GitHub repository:\n$ pip install git+https://github.com/hanleyc01/MemoryModelAlmanac.git\nor from conda\n$ conda install -c hanleyc01 MemoryModelAlmanac\nor from pypi\n$ pip install MemoryModelAlmanac",
+    "crumbs": [
+      "MemoryModelAlmanac"
+    ]
+  },
+  {
+    "objectID": "hopfield.html",
+    "href": "hopfield.html",
+    "title": "hopfield",
+    "section": "",
+    "text": "In this module we implement classical binary Hopfield Networks as well as Dense Associative Memories, which are both forms of energy-based Associative Memories. Energy-based Associative Memories (AMs) are recursive neural networks which are content-addressable memories. The main bulk of the module is implemented using the tutorial at https://tutorial.amemory.net/tutorial/dense_storage.html as a reference. Please read this first, as it contains much more information, and the implementation is largely identical in layout and function.",
+    "crumbs": [
+      "hopfield"
+    ]
+  },
+  {
+    "objectID": "hopfield.html#example",
+    "href": "hopfield.html#example",
+    "title": "hopfield",
+    "section": "Example",
+    "text": "Example\nIn order to demonstrate the efficacy (and shortcomings) of the classical Hopfield Network, we will do a simple recall task using the MNIST dataset.\n\nDATA_DIR = \"../data/mnist\"\n\npxw, pxh = 28, 28\n\n\ndef transform(data):\n    data = np.array(data, dtype=jnp.float32)\n    data = rearrange(data, \"w h -&gt; (w h)\")\n    data[data &gt; 0.0] = 1.0\n    data[data == 0.0] = -1.0\n    return data\n\n\nmnist_train = MNIST(DATA_DIR, train=True, transform=transform)\nmnist_data_loader = DataLoader(mnist_train, batch_size=128, shuffle=True)\nmnist_it = iter(mnist_data_loader)\nmnist_data, _ = next(mnist_it)\n\n\ndef show_im(im: Float[Array, \" WH\"], title: str = \"\") -&gt; None:\n    im = rearrange(im, \"(w h) -&gt; w h\", w=pxw, h=pxh)\n    plt.imshow(im)\n    plt.title(title)\n    plt.xticks([])\n    plt.yticks([])\n\n\nshow_im(mnist_data[0], title=\"Testing whether the transform is correct\")\n\n\n\n\n\n\n\n\n\ndef mask(\n    state: Float[Array, \" D\"], pct_mask: float = 0.5, key: jax.Array = jr.PRNGKey(0)\n) -&gt; Float[Array, \" D\"]:\n    D = state.shape[-1]\n    bits_to_mask = jr.choice(key, np.arange(D), shape=(int(D * pct_mask),))\n    return state.at[bits_to_mask].set(-1.0)\n\n\nshow_im(\n    mask(jnp.array(mnist_data[0], dtype=jnp.float32), 0.5), title=\"Example Masked Query\"\n)\n\n\n\n\n\n\n\n\n\ndef iterate_recall(\n    am: GenericAM,\n    query_state: Float[Array, \" D\"],\n    save: bool = True,\n    key: jax.Array = jr.PRNGKey(0),\n    **kwargs,\n):\n    final_query_state, (frames, energies) = am.async_recall(\n        query_state, key=key, **kwargs\n    )\n    return final_query_state, (frames, energies)\n\n\nXi = jnp.array(mnist_data[:2], dtype=jnp.float32)\nchn = ClassicalHopfield(Xi)\nquery = Xi[1]\nmasked_query = mask(query)\nfinal_query_state, (frames, energies) = iterate_recall(chn, masked_query)\n\nshow_im(masked_query, \"Initial Query State\")\n\n\n\n\n\n\n\n\n\nshow_im(final_query_state, \"Final Query State\")\n\n\n\n\n\n\n\n\nWe can also plot out the energy of the network over time:\n\nplt.plot(energies)\nplt.title(\"Energy of query buffer per iteration\")\nplt.grid(True, alpha=0.3)\nplt.xlabel(\"Iteration\")\nplt.ylabel(r\"$E_\\text{CHN}$\")\nplt.show()\n\n\n\n\n\n\n\n\nTo demonstrate the low critical capacity of this associative memory, we really only need to introduce one more pattern:\n\nXi = jnp.array(mnist_data[:3])\nchn = ClassicalHopfield(Xi)\nquery = Xi[1]\nmasked_query = mask(query)\nfinal_query_state, (frames, energies) = iterate_recall(chn, masked_query)\nshow_im(masked_query, \"Masked Image\")\n\n\n\n\n\n\n\n\n\nshow_im(final_query_state, \"Misremembered Item\")\n\n\n\n\n\n\n\n\nThis is what I call the omnidigit. There is some interesting research pointing towards the shift between generative capacities and memory capacities after AMs reach their critical capacity, e.g. Pham, et al. (2025) and a worked out tutorial here. But, we will not be covering this here.",
+    "crumbs": [
+      "hopfield"
+    ]
+  },
+  {
+    "objectID": "hopfield.html#example-1",
+    "href": "hopfield.html#example-1",
+    "title": "hopfield",
+    "section": "Example",
+    "text": "Example\nLike we did with the Classical Hopfield network, we will also show an example. This time, however, we will include a lot more stored patterns in order to demonstrate that the associative memory has a higher critical capacity.\n\nXi = jnp.array(mnist_data[:10])\ndam = DAM(Xi, polynomial=6, rectified=True)\nquery = Xi[1]\nshow_im(query, \"Unmasked Query\")\n\n\n\n\n\n\n\n\n\nmasked_query = mask(query)\nshow_im(masked_query, \"Masked Query\")\n\n\n\n\n\n\n\n\n\nfinal_query_state, (frames, energies) = iterate_recall(dam, masked_query)\nshow_im(final_query_state, \"Final Query State\")\n\n\n\n\n\n\n\n\n\nplt.plot(energies)\nplt.title(\"Energy of query state per iteration\")\nplt.grid(True, alpha=0.3)\nplt.xlabel(\"Iteration\")\nplt.ylabel(\"Energy\")\nplt.show()",
+    "crumbs": [
+      "hopfield"
+    ]
+  },
+  {
+    "objectID": "minerva.html",
+    "href": "minerva.html",
+    "title": "minerva",
+    "section": "",
+    "text": "In this module we will be implementing \\(\\mathsf{Minerva}\\) models, which are a class of associative memory models with deep theoretical connections to Hopfield networks. What distinguishes them is that they are developed expicitly for the cognitive science context as a model of human memory. Unifying all of these models is the tensor-based framework proposed in Kelly, et al. (2017).\n\nMinerva2\nSimilar to Hopfield networks, the original \\(\\mathsf{Minerva}\\) model proposed by Hintzman (1984), MINERVA2, uses integer values. The main difference is that we allow for \\(0\\) values (denoting absent “features”). The recall function for MINERVA2 is given by: \\[\n\\mathcal{M}_\\mathsf{Minerva2}(\\sigma) = \\sum^N_{i=1} \\xi^i \\left[ \\frac{1}{D} \\left( \\sum^D_{j=1} \\xi^i_j \\sigma_j \\right)^3 \\right]\n\\]\n\nsource\n\nMinerva2\n\n Minerva2 (Xi:jaxtyping.Float[Array,'KD'], polynomial:int=3)\n\n\nsource\n\n\nMinerva2.sims\n\n Minerva2.sims (query_state:jaxtyping.Float[Array,'D'])\n\nCompute the similarities between a query probe and the stored memory traces.\n\n\n\n\nType\nDetails\n\n\n\n\nquery_state\nFloat[Array, ‘D’]\nThe query “probe”\n\n\nReturns\nFloat[Array, ‘D’]\n\n\n\n\n\nsource\n\n\nMinerva2.recall\n\n Minerva2.recall (query_state:jaxtyping.Float[Array,'D'])\n\nSimulate recall of a query by reconstructing it as a linear combination of the stored patterns.\n\n\n\n\nType\nDetails\n\n\n\n\nquery_state\nFloat[Array, ‘D’]\nThe query “probe”\n\n\nReturns\nFloat[Array, ‘D’]\n\n\n\n\nMINERVA2 has a deep relationship with Hopfield networks, as they are formulated from the energy-based AM perspective. Implicitly operating here is an energy function defined as the anti-derivative of Minerva2.recall.\n\nsource\n\n\nMinerva2.energy\n\n Minerva2.energy (query:jaxtyping.Float[Array,'D'])\n\nCompute the energy of query.\n\n\n\n\nType\nDetails\n\n\n\n\nquery\nFloat[Array, ‘D’]\nThe query “probe”\n\n\n\n\nsource\n\n\nMinerva2.energy\n\n Minerva2.energy (query:jaxtyping.Float[Array,'D'])\n\nCompute the energy of query.\n\n\n\n\nType\nDetails\n\n\n\n\nquery\nFloat[Array, ‘D’]\nThe query “probe”\n\n\n\n\nDATA_DIR = \"../data/mnist\"\n\npxw, pxh = 28, 28\n\n\ndef transform(data):\n    data = np.array(data, dtype=jnp.float64)\n    data = rearrange(data, \"w h -&gt; (w h)\")\n    data[data &gt; 0.0] = 1.0\n    data[data == 0.0] = -1.0\n    return data\n\n\nmnist_train = MNIST(DATA_DIR, train=True, transform=transform)\nmnist_data_loader = DataLoader(mnist_train, batch_size=128, shuffle=True)\nmnist_it = iter(mnist_data_loader)\nmnist_data, _ = next(mnist_it)\n\n\ndef show_im(im: Float[Array, \" WH\"], title: str = \"\") -&gt; None:\n    im = rearrange(im, \"(w h) -&gt; w h\", w=pxw, h=pxh)\n    plt.imshow(im)\n    plt.title(title)\n    plt.xticks([])\n    plt.yticks([])\n\n\nshow_im(mnist_data[1], title=\"Testing whether the transform is correct\")\n\n\n\n\n\n\n\n\n\ndef mask(\n    state: Float[Array, \" D\"], pct_mask: float = 0.3, key: jax.Array = jr.PRNGKey(0)\n) -&gt; Float[Array, \" D\"]:\n    prange = np.array([pct_mask, 1-pct_mask])\n    return state * jr.choice(key, np.array([-1, 1]), p=prange, shape=state.shape)\n\n\nXi = jnp.array(mnist_data[:7])\nmin2 = Minerva2(Xi, polynomial=3)\nquery = Xi[1]\nmasked_query = mask(query)\nshow_im(masked_query, \"Masked Query\")\n\nERROR:2025-09-09 15:32:44,038:jax._src.xla_bridge:487: Jax plugin configuration error: Exception when calling jax_plugins.xla_cuda12.initialize()\nTraceback (most recent call last):\n  File \"/home/pop-harrier/Documents/Cogsci/MemoryModelAlmanac/.venv/lib/python3.13/site-packages/jax/_src/xla_bridge.py\", line 485, in discover_pjrt_plugins\n    plugin_module.initialize()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/pop-harrier/Documents/Cogsci/MemoryModelAlmanac/.venv/lib/python3.13/site-packages/jax_plugins/xla_cuda12/__init__.py\", line 328, in initialize\n    _check_cuda_versions(raise_on_first_error=True)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/pop-harrier/Documents/Cogsci/MemoryModelAlmanac/.venv/lib/python3.13/site-packages/jax_plugins/xla_cuda12/__init__.py\", line 285, in _check_cuda_versions\n    local_device_count = cuda_versions.cuda_device_count()\nRuntimeError: jaxlib/cuda/versions_helpers.cc:113: operation cuInit(0) failed: CUDA_ERROR_UNKNOWN\nWARNING:2025-09-09 15:32:44,042:jax._src.xla_bridge:864: An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\n\n\n\n\n\n\n\n\n\nFor our first test, we will simply show that it can recall:\n\nrecalled_value = min2.recall(masked_query)\nshow_im(recalled_value, \"Recalled Value\")\n\n\n\n\n\n\n\n\nIntuitively we can see that the value \\(4\\) is preferred as the most similar value. However, we also another interesting property of MINERVA2 compared to Hopfield networks. Rather than asynchronously updating random bits in the query state, we rather form recalled values as weighted sums of the stored traces, where the weight is the correlation between the query provided and the patterns.\nWe can also compare the energy of the initial state and the final state:\n\ninitial_energy = min2.energy(masked_query)\ninitial_energy\n\nArray(-1.8811876e+07, dtype=float32)\n\n\n\nfinal_energy = min2.energy(recalled_value)\nfinal_energy\n\nArray(-1.2777563e+23, dtype=float32)\n\n\n\ninitial_energy = min2.energy(masked_query)\nfinal_energy = min2.energy(recalled_value)\nenergies = [initial_energy, final_energy]\nplt.plot(energies, color=\"black\", linestyle=\"--\")\nplt.xticks([])\nplt.ylabel(\"Energy\")\nplt.title(\"Energy of the initial query and the final query\")\nplt.plot(0, initial_energy, \"bo\", label=\"Initial energy\")\nplt.plot(1, final_energy, \"ro\", label=\"Final energy\")\nplt.grid(True, alpha=0.3)\nplt.legend()\nplt.show()\n\n\n\n\n\n\n\n\nAnother interesting thing about Minerva2 recall is that while it is normalized by the dimensionality of the stored patterns \\(D\\), we can normalize it by more familiar methods. For example, if we instead normalize recalled patterns using \\(\\text{sgn}\\), we get near-perfect recall (and near identical performance to DAM models withs single-shot recall).\n\nnormalized_recalled_value = jnp.sign(recalled_value)\nshow_im(normalized_recalled_value, r\"Normalized Recalled Value using $\\text{sgn}$\")\n\n\n\n\n\n\n\n\n\n\nIterative Recall\nWe can think of the single-shot recall performed by Minerva2 as a “collapsed” asynchronous recall which is performed over the indices \\(i = 1, \\dots, D\\), where \\(D\\) is the dimensionality of the pattern vectors. Hintzman, however, notes that we might also want to perform iterated recall similar to the element-wise asynchronous recall of Hopfield networks, except updating each \\(i\\) every single time. Whenever we do not normalize the recalled value with \\(\\text{sgn}\\), we do not get very meaningful results:\n\nsource\n\n\nMinerva2.iterative_recall\n\n Minerva2.iterative_recall (query:jaxtyping.Float[Array,'D'],\n                            nsteps:int=200, normalize_with_sgn:bool=False)\n\nIteratively perform recall on a query state.\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nquery\nFloat[Array, ‘D’]\n\nThe query “probe”\n\n\nnsteps\nint\n200\nHow many iterations you want to perform\n\n\nnormalize_with_sgn\nbool\nFalse\nWhether or not to normalize the recalled value with jnp.sign.\n\n\nReturns\nNone\n\n\n\n\n\n\nsource\n\n\nMinerva2.iterative_recall\n\n Minerva2.iterative_recall (query:jaxtyping.Float[Array,'D'],\n                            nsteps:int=200, normalize_with_sgn:bool=False)\n\nIteratively perform recall on a query state.\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nquery\nFloat[Array, ‘D’]\n\nThe query “probe”\n\n\nnsteps\nint\n200\nHow many iterations you want to perform\n\n\nnormalize_with_sgn\nbool\nFalse\nWhether or not to normalize the recalled value with jnp.sign.\n\n\nReturns\nNone\n\n\n\n\n\n\nnsteps = 2\nfinal_query_state, (frames, energies) = min2.iterative_recall(\n    masked_query, nsteps=nsteps\n)\nshow_im(final_query_state, title=f\"{nsteps} Recall\")\n\n\n\n\n\n\n\n\n\nplt.plot(energies)\nplt.title(f\"Energy, {nsteps} iterations\")\nplt.xlabel(\"Iteration\")\nplt.ylabel(\"Energy\")\nplt.grid(True, alpha=0.3)\nplt.show()\n\n\n\n\n\n\n\n\nThere is a decrease in energy, but the recalled trace is not at all close to our desired pattern (a handwritten \\(4\\)). If we do not normalize the value at the end, however, then we get exploding values to \\(\\infty\\) or \\(\\text{NaN}\\) (undefined values), as we can see with the following:\n\nnsteps = 4\nfinal_query_state, (frames, energies) = min2.iterative_recall(\n    masked_query, nsteps=nsteps\n)\nfinal_query_state.max()\n\nArray(nan, dtype=float32)\n\n\nTo solve this problem, we can introduce \\(\\text{sgn}\\) normalization into the iterated recall:\n\nnsteps = 10_000\nfinal_query_state, (frames, energies) = min2.iterative_recall(\n    masked_query, nsteps=nsteps, normalize_with_sgn=True,\n)\nshow_im(final_query_state, f\"Final Query State, {nsteps} iterations, normalized with sgn\")\n\n\n\n\n\n\n\n\n\nplt.plot(energies)\nplt.title(f\"Energy, {nsteps} iterations\")\nplt.xlabel(\"Iteration\")\nplt.ylabel(\"Energy\")\nplt.grid(True, alpha=0.3)\nplt.show()\n\n\n\n\n\n\n\n\n\n\n\nHolographic Minerva\n\n# TODO: implement holographic minerva model\n\n\n\nVector Intersector Units\n\n# TODO: implement vector intersector units",
+    "crumbs": [
+      "minerva"
+    ]
+  },
+  {
+    "objectID": "bidirectional.html",
+    "href": "bidirectional.html",
+    "title": "bidirectional",
+    "section": "",
+    "text": "Bidirectional Associative Memories are a kind of recurrent neural architecture which allows for bidirectional recall of stored associated memory patterns. In particular, we will be implementing the Nonlinear Dynamic Recurrent Associative Memory for Learning Bipolar and Nonpolar Correlated Patterns (NDRAM) – a mouthful – as well as a Bidirectional Heteroassociative Memory (BHM) based on NDRAM.\nsource",
+    "crumbs": [
+      "bidirectional"
+    ]
+  },
+  {
+    "objectID": "bidirectional.html#example-recall",
+    "href": "bidirectional.html#example-recall",
+    "title": "bidirectional",
+    "section": "Example Recall",
+    "text": "Example Recall\nIn order to test whether the system works, we will perform a forwards and backwards recall for associated patterns.\n\ndef display_chartier_recall(img1, img2, img3, img4, titles=[\"\", \"\", \"\", \"\"]):\n    images = [jnp.array(img).reshape(28, 28) for img in [img1, img2, img3, img4]]\n    fig, axes = plt.subplots(1, 4, figsize=(10, 10))\n    for i, ax in enumerate(axes):\n        ax.imshow(images[i])\n        ax.set_title(titles[i])\n        ax.set_xticks([])\n        ax.set_yticks([])\n    plt.tight_layout()\n    plt.show()\n\n\nquery, target = A[0], P[0]\nmasked_query, masked_target = mask(query, 0.25), mask(target, 0.25)\ndisplay_pair(query, target, [\"Original Query\", \"Original Target\"])\n\n\n\n\n\n\n\n\n\ndisplay_pair(masked_query, masked_target, [\"Masked Query\", \"Masked Target\"])\n\n\n\n\n\n\n\n\n\nest_target = chartier.forward_pred(masked_query)\ndisplay_chartier_recall(\n    query,\n    target,\n    masked_query,\n    est_target,\n    [\"Original Query\", \"Original Target\", \"Masked Query\", \"Estimated Target\"],\n)\n\n\n\n\n\n\n\n\n\nest_query = chartier.backward_pred(masked_target)\ndisplay_chartier_recall(\n    query,\n    target,\n    est_query,\n    masked_target,\n    [\"Original Query\", \"Original Target\", \"Estimated Query\", \"Masked Target\"],\n)",
+    "crumbs": [
+      "bidirectional"
+    ]
+  }
+]
