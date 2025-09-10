@@ -1,0 +1,11 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_hopfield.ipynb
+      - 01_minerva.ipynb
+      - 02_bidirectional.ipynb
+      - 03_universalhopfield.ipynb
+      - 04_pdp.ipynb
+      - 05_pcn.ipynb
+      - 06_autoencoder.ipynb
